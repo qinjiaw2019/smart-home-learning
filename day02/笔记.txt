@@ -1,0 +1,168 @@
+========嵌入式linux编程===============
+编程环境：linux
+编程语言：linux接口+C语言
+
+嵌入式开发流程：
+1.编写工程
+2.编译工程
+3.移植工程
+4.测试工程
+
+============编写工程===========
+使用编程软件： npp
+    安装方式：双击执行文件----》下一步----》完成
+	1.1 打开npp软件----》文件-----》新建文件
+	1.2 右击新建文件----》另存为---->找到共享文件夹位置
+	    保存为.c文件
+	1.3 建立模型
+	    int main(int argc,const char *argv[])
+		{
+
+		  return 0;
+		}
+	1.4 输出语句
+         引号的最后\n  1.在打印的时候自动换行输出
+                       2.才能显示在开发板的屏幕上
+    1.5 保存  ctrl+s
+=============编译工程==========
+使用交叉工具编译链：
+         本地编译：gcc（C语言） g++（c++语言）
+		 开发板编译：arm-linux-gcc
+	本地编译：
+	     1.gcc  + 文件名.c
+		     生成一个可执行文件a.out
+			 执行：./a.out
+		 2.gcc  文件名.c   -o  文件名
+		                 指定生成
+
+练习：打印一下自己的中文名字在虚拟机上
+注意三点：1.编译的时候进入共享文件夹
+          2.注意警告和错误
+		  
+==============移植工程===============
+如何移植到arm开发板上去？
+   1.正确的链接开发板
+    电源线  串口线   USB转串口
+   2.使用 CRT串口软件
+     1.解压软件CRT,解压到当前文件
+	 2.双击SecureCRT.exe
+     3.配置协议
+   3.查看USB转串口的com口是多少？
+     使用驱动文件：
+	    1.下载PL2303驱动
+		2.双击安装
+		3.计算机----》管理----》设备管理器----》端口
+   4.打开CRT软件配置协议
+     协议：serial
+     端口：根据第三步去看
+	 波特率：115200
+   5.1.看不到终端，使用ctrl+c
+     2.重启开发板  复位键
+    
+   6.使用cd 进入根目录  cd /
+     使用命令df查看一下开发板的使用空间
+	
+下载到开发板
+  1.在使用编译的时候使用 arm-linux-gcc
+    arm-linux-gcc hello.c -o hello.c
+
+  2.下载文件的时候使用命令 rx 文件名
+          1.rx  文件名
+		  2.点击传输-----》第三个选项-----》共享文件
+		  3.找到要发送的文件----》发送
+		  
+=============测试工程===============
+  1.修改文件权限
+    chmod  777 hello
+  2.执行文件
+    ./hello
+	
+火星文：选项----》会话选项----》外观-----》字符编码 utf-8----》确定
+	
+====================================
+怎么样在开发板上显示满江红？
+1.arm开发板是如何显示颜色
+   读数据  是一行一行的
+   一个像素点   4字节   位数32
+  
+2.打开文件的操作  使用函数
+  在linux中，一切设备皆文件
+          硬件设备：我们使用的驱动文件
+
+  查看函数  使用linux里面的man手册
+   man man 查看所有的手册
+  1 Executable programs or shell commands               内核函数  
+  2 System calls (functions provided by the kernel)     系统函数
+  3 Library calls (functions within program libraries)  C语言库函数
+
+ 2.1打开函数  open()
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <fcntl.h>
+
+       int open(const char *pathname, int flags);
+        返回值：成功 ：返回一个文件描述符  一个大于的零的数
+		        失败 ：返回  -1
+		
+		参数：const char *pathname  -----》字符串类型的路径名
+              int flags   -----》权限
+			         O_RDONLY -------read-------只读权限
+					 O_WRONLY -------write------只写权限
+					 O_RDWR   ----read and write ----可读可写
+  2.2写函数  write()
+      #include <unistd.h>
+
+      ssize_t write(int fd, const void *buf, size_t count);
+      返回值：成功  返回写入的字节数
+	          失败  返回 -1
+	   
+	  参数：int fd            文件的描述符
+	        const void *buf   写入文件的字节数的缓冲区
+			size_t count      写入的缓冲区的大小
+
+  2.3关闭文件 close()
+     #include <unistd.h>
+
+     int close(int fd);
+      返回值：成功  返回 0
+              失败  返回 -1
+      参数：
+            int fd            文件的描述符
+
+练习：德国国旗和比利时国旗
+ 
+==============显示图片=============
+常见的图片类型：jpg gif jpeg  bmp
+
+ 一张24位位图 ：bmp
+ 
+ 错误打印函数  perror
+   #include <stdio.h>
+
+    void perror(const char *s);
+
+    参数：const char *s   字符串
+ 
+ 读取函数  read()
+       #include <unistd.h>
+
+       ssize_t read(int fd, void *buf, size_t count);
+       返回：成功  返回一个读取的字节数
+	         失败  返回 -1
+	   
+	   参数：int fd           文件描述符
+	         void *buf        读的缓冲区
+			 size_t count     读的字节数
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+		
+		
+		
+		

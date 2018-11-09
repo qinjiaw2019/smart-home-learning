@@ -1,0 +1,94 @@
+一、嵌入式领域
+  软件开发    -----》linux环境/逻辑/算法（上层应用）
+  系统开发    -----》linux内核运维（shell脚本）
+  驱动开发    -----》电路分析/硬件构造/驱动设计
+  
+二、LED灯
+  驱动工程师：
+  1）驱动源码：led.c
+  2）驱动文件：ked.ko
+  
+三、软件应用层如何去使用底层的驱动？
+  1.分析源码led.c
+    1.1驱动里面没有主函数（main）
+       应用层才会出主函数
+    1.2驱动中输入字符串使用的是printk();
+       查看打印等级：
+	       cat /proc/sys/kernel/printk
+         7       7       1       7	
+	#define KERN_EMERG      "<0>" /* system is unusable */
+	               /*紧急事件消息，系统崩溃之前提示，表示系统不可用*/
+	#define KERN_ALERT      "<1>" /* action must be taken immediately */
+	               /*报告消息，表示必须立即采取措施*/
+	#define KERN_CRIT       "<2>" /* critical conditions */
+	               /*临界条件，通常涉及严重的硬件或软件操作失败*/
+	#define KERN_ERR        "<3>" /* error conditions */
+	               /*错误条件，驱动程序常用KERN_ERR来报告硬件的错误*/
+	#define KERN_WARNING    "<4>" /* warning conditions */
+	              /*警告条件，对可能出现问题的情况进行警告*/
+	#define KERN_NOTICE     "<5>" /* normal but significant condition */
+	              /*正常但又重要的条件，用于提醒*/
+	#define KERN_INFO       "<6>" /* informational */
+	             /*提示信息，如驱动程序启动时，打印硬件信息*/
+	#define KERN_DEBUG      "<7>" /* debug-level messages */ 
+		         /*调试级别的消息*/
+	    应用层中输出字符串使用的是printf();
+
+2.led.c结构
+
+1)初始化函数
+  module_init(led_init);
+  
+2)为4盏灯LED申请GPIO口
+  gpio_request(led_gpios[i].gpio, led_gpios[i].name);
+		 
+3)把4个GPIO口设置为输出模式
+  gpio_direction_output(led_gpios[i].gpio,0); 
+  
+4)注册一个杂项设备（结构体）
+  misc_register(&gec6818_led_dev);
+
+5)定义的杂项设备的成员
+  static struct miscdevice gec6818_led_dev = {
+	.minor			= MISC_DYNAMIC_MINOR,//动态分配设备号
+	.name			= DEVICE_NAME,//led设备节点文件名字
+	.fops			= &gec6818_led_dev_fops,//文件操作集
+  };  
+
+6)文件操作集（驱动提供给函数接口 应用程序）
+  static struct file_operations gec6818_led_dev_fops = {
+	.owner			= THIS_MODULE, //模式状态
+	.open           = led_open,    //打开对应的gpio 
+	.unlocked_ioctl	= gec6818_leds_ioctl,
+	//当你的应用程序调用ioctl函数是，驱动就会对应的gec6818_leds_ioctl
+};
+  
+7)为GPIO口号设置值
+  gpio_set_value(led_gpios[_IOC_NR(cmd)].gpio, arg);
+  
+驱动卸载时：
+8)在内核注销模块
+  module_exit(gec5260_led_dev_exit); 
+9)释放所有的GPIO口的资源 
+  gpio_free(led_gpios[i].gpio);
+	
+10)移除杂项设备
+ misc_deregister(&gec6818_led_dev); 
+  
+四、如何去安装/卸载驱动？
+  4.1 首先下载驱动镜像文件led.ko到6818开发平台
+   
+  4.2 查看当期的开发板有没有安装过驱动
+          lsmod ----》检查当前有没有安装驱动  
+  
+  4.3 安装led驱动
+          insmod led.ko
+  
+ 
+		 
+		 
+		 
+		 
+		 
+		 
+		 

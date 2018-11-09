@@ -1,0 +1,136 @@
+  QQ群号:654597542
+  电话  :13260685858
+ ===============================
+ 练习：图片翻转：最后一行的数据和第一行交换
+ 
+=========U盘挂载=============
+步骤：1.把这个U盘插到开发板，最左边的USB接口
+      2.使用CRT软件在终端输入：cd /mnt
+	  3.使用ls命令， sd 内存卡     udisk U盘
+	  4.进到udisk里面： cd udisk
+	  5.使用复制命令：cp   文件名  路径
+	  6.使用cd命令：cd /
+	 注意：如果在CRT上面，此刻的终端是
+	 [root@GEC6818 /mnt/udisk]#
+	  一定不要插U盘，无法读取
+	  
+=============================
+文件的偏移   lseek
+    理论上来说：图片的大小=800*480*3=1152000字节
+	实际上它是： 1152054  多出来54字节 =14字节+40字节
+          14字节：图片的名字   40字节：图片的属性
+     
+       #include <sys/types.h>
+       #include <unistd.h>
+
+       off_t lseek(int fd, off_t offset, int whence);
+        返回值：成功  返回  一个偏移量
+		        失败  返回  -1
+		
+		参数：int fd         文件描述符
+		      off_t offset   文件偏移量 字节 
+			  int whence     
+			       SEEK_SET  开始位置
+                   SEEK_CUR  当前位置           
+                   SEEK_END  结束位置
+       
+=============内存映射===============
+1.内存映射的函数 mmap()
+    直接将内存映射到lcd屏幕，提高效率
+	 
+	#include <sys/mman.h>
+    内存映射
+    void *mmap(void *addr, size_t len, int prot, int flags,
+              int fildes, off_t off);
+        返回值：成功  返回一个指向映射成功的那片地址空间的首地址0
+		        失败  返回 NULL
+		
+		参数 ：void *addr  addr你要写的映射的首地址，一般设置为NULL
+		       size_t len  你要映射的地址的大小  单位：字节
+			   int prot    设置权限
+                    PROT_READ    只读   Data can be read.
+                    PROT_WRITE   只写   Data can be written.
+                    PROT_EXEC    执行   Data can be executed.
+                    PROT_NONE    无权限   Data cannot be accessed.
+			   int flags  
+			        MAP_SHARED   可以共享    Changes are shared.
+                    MAP_PRIVATE  不可共享    Changes are private.
+               int fildes  你要映射的硬件设的文件描述符
+			   off_t off   偏移量，一般设置为0
+2.解除映射 munmap
+    #include <sys/mman.h>
+
+    int munmap(void *addr, size_t len);
+      参数：void *addr  addr你要写的映射的首地址，一般设置为NULL
+		    size_t len  你要映射的地址的大小  单位：字节
+
+任意位置任意大小
+  1.格式错误：bmp格式
+  2.虽然是任意大小，但是别太任性，因为你要满足图片 w/4=整
+  3.路径不要错
+  
+============输入子系统=================
+触摸屏：电阻屏    诺基亚、金立
+        电容屏    智能手机
+		
+触摸事件：外接设备（键盘/鼠标/触摸屏）
+          接入第三平台，当这些设备状态发生改变的时候，我们称这个样的事件为触摸事件
+		  
+输入子系统：分析事件，得出事件的类型/编码/值
+
+输入子系统的头文件路径： vi /usr/include/linux/input.h 
+
+struct input_event
+{
+  struct timeval time;//事件发生的时间
+  __u16 type;//事件的类型
+  __u16 code;//事件的编码，进一步对类型进行描述
+  __s32 value;//事件的值
+}
+
+对linux来讲，这个事件是可以用结构体归纳，
+    所以这些事件就用结构体来包裹
+
+事件的类型
+  #define  EV_KEY  ------->按键类型
+  #define  EV_ABS  ------->触摸屏的类型
+  
+事件的编码
+  #define  ABS_X     -----》触摸屏的x轴
+  #define  ABS_Y     -----》触摸屏的y轴
+  #define  ABS_PRESSURE  ----》获取压力值
+  
+事件的值：
+ value：由code决定
+  code：ABS_X         -------》value：800
+  code：ABS_Y         -------》value：480
+  code：ABS_PRESSURE  -------》value：0-200
+  
+计算内存大小，使用sizeof()  
+
+例子：
+struct A
+{
+  int a;
+  char b;
+};
+
+struct A  B;
+调用：
+   1.点的方式调用
+     B.a;
+   2.箭头方式调用
+     B->a;
+
+
+
+
+
+
+
+
+
+
+
+
+
